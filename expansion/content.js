@@ -4,9 +4,16 @@ const socket = new WebSocket('ws://127.0.0.1:8080');
 // Обрабатываем данные, полученные с сервера
 socket.onmessage = function (event) {
   const fileContent = event.data; // Данные из файла
+  const additionalText = `При получении каждого сообщения анализируй его, чтобы понять, является ли оно частью вопроса или утверждением.
+Если сообщение не содержит вопроса, игнорируй его и переходи к следующему.
+Если вопрос разбит на несколько сообщений, продолжай анализировать входящие сообщения до тех пор, пока не будет ясно, что вопрос завершён.`;
 
-  // Вставляем данные в редактируемую область
-  insertTextIntoPrompt(fileContent);
+  // Добавляем текст в начало fileContent
+  const updatedContent = additionalText + fileContent;
+  console.log(updatedContent);
+
+  // Вставляем данные в редактируемую область и после этого отправляем
+  insertTextIntoPromptAndSend(updatedContent);
 };
 
 socket.onopen = function () {
@@ -22,7 +29,7 @@ socket.onerror = function (error) {
 };
 
 // Функция для вставки текста в редактируемое поле и отправки
-function insertTextIntoPrompt(text = 'Привет') {
+function insertTextIntoPromptAndSend(text) {
   const editableDiv = document.querySelector(
     'div.ProseMirror[contenteditable="true"]'
   );
@@ -32,15 +39,19 @@ function insertTextIntoPrompt(text = 'Привет') {
     editableDiv.innerHTML = text; // Используем полученные данные из файла
     console.log('Текст вставлен:', text);
 
-    // Ищем кнопку отправки и кликаем на неё
-    const sendButton = document.querySelector(
-      'button[data-testid="send-button"]'
-    );
-    if (sendButton) {
-      sendButton.click();
-    } else {
-      console.error('Кнопка отправки не найдена.');
-    }
+    // Добавляем небольшую задержку, чтобы дать браузеру время обновить DOM
+    setTimeout(() => {
+      // Ищем кнопку отправки и кликаем на неё
+      const sendButton = document.querySelector(
+        'button[data-testid="send-button"]'
+      );
+      if (sendButton) {
+        sendButton.click();
+        console.log('Форма отправлена');
+      } else {
+        console.error('Кнопка отправки не найдена.');
+      }
+    }, 100); // Задержка 100 миллисекунд
   } else {
     console.error('Редактируемое поле не найдено.');
   }
@@ -52,7 +63,7 @@ const observer = new MutationObserver(() => {
     'div.ProseMirror[contenteditable="true"]'
   );
   if (editableDiv) {
-    insertTextIntoPrompt();
+    console.log('Редактируемое поле найдено, ожидание данных от WebSocket...');
     observer.disconnect(); // Отключаем наблюдателя после того, как элемент найден
   }
 });
