@@ -1,19 +1,25 @@
 // Подключаемся к WebSocket-серверу
 const socket = new WebSocket('ws://127.0.0.1:8080');
 
+let isAdditionalTextAdded = false; // Флаг для проверки, добавляли ли мы дополнительный текст
+
 // Обрабатываем данные, полученные с сервера
 socket.onmessage = function (event) {
-  const fileContent = event.data; // Данные из файла
+  let fileContent = event.data; // Данные из файла
   const additionalText = `При получении каждого сообщения анализируй его, чтобы понять, является ли оно частью вопроса или утверждением.
 Если сообщение не содержит вопроса, игнорируй его и переходи к следующему.
 Если вопрос разбит на несколько сообщений, продолжай анализировать входящие сообщения до тех пор, пока не будет ясно, что вопрос завершён.`;
 
-  // Добавляем текст в начало fileContent
-  const updatedContent = additionalText + fileContent;
-  console.log(updatedContent);
+  // Если текст еще не добавлялся, добавляем его один раз
+  if (!isAdditionalTextAdded) {
+    fileContent = additionalText + fileContent;
+    isAdditionalTextAdded = true; // Устанавливаем флаг, что текст уже добавлен
+  }
+
+  console.log(fileContent);
 
   // Вставляем данные в редактируемую область и после этого отправляем
-  insertTextIntoPromptAndSend(updatedContent);
+  insertTextIntoPromptAndSend(fileContent);
 };
 
 socket.onopen = function () {
