@@ -63,16 +63,53 @@ function insertTextIntoPromptAndSend(text) {
   }
 }
 
-// Создаем MutationObserver для отслеживания появления элемента
-const observer = new MutationObserver(() => {
-  const editableDiv = document.querySelector(
-    'div.ProseMirror[contenteditable="true"]'
-  );
-  if (editableDiv) {
-    console.log('Редактируемое поле найдено, ожидание данных от WebSocket...');
-    observer.disconnect(); // Отключаем наблюдателя после того, как элемент найден
+// Функция для проверки и скрытия <article> с <h5>
+function checkAndHideArticle(article) {
+  const h5 = article.querySelector('h5');
+  if (h5 && article.style.display !== 'none') {
+    article.style.display = 'none';
+    console.log('Скрываем article, так как внутри найден h5');
   }
+}
+
+// Создаем MutationObserver для отслеживания изменений в DOM
+const observer = new MutationObserver((mutations) => {
+  let editableDivFound = false;
+
+  mutations.forEach((mutation) => {
+    // Обрабатываем добавленные узлы
+    mutation.addedNodes.forEach((node) => {
+      // Проверяем наличие редактируемого поля
+      if (!editableDivFound && node.nodeType === Node.ELEMENT_NODE) {
+        const editableDiv = node.querySelector(
+          'div.ProseMirror[contenteditable="true"]'
+        );
+
+        if (editableDiv) {
+          console.log('Редактируемое поле найдено, ожидание данных от WebSocket...');
+          editableDivFound = true;
+          // Если больше не нужно отслеживать редактируемое поле, можно отключить наблюдатель
+          // observer.disconnect(); // Раскомментируйте, если наблюдение больше не требуется
+        }
+      }
+
+      // Проверяем и скрываем новые элементы <article> с <h5>
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.matches('article')) {
+          checkAndHideArticle(node);
+        } else {
+          node.querySelectorAll('article').forEach(checkAndHideArticle);
+        }
+      }
+    });
+  });
 });
 
 // Запускаем наблюдателя за изменениями в DOM
-observer.observe(document.body, { childList: true, subtree: true });
+observer.observe(document.body, {
+  childList: true, // Отслеживать добавление/удаление дочерних узлов
+  subtree: true    // Следить за всеми потомками
+});
+
+// Проверка и скрытие существующих <article> с <h5> при загрузке страницы
+document.querySelectorAll('article').forEach(checkAndHideArticle);

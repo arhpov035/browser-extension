@@ -1,0 +1,16 @@
+.flex.flex-col.text-sm {
+    display: flex;
+    flex-wrap: wrap; /* Позволяет элементам переноситься на следующую строку */
+        flex-direction: row;
+}
+
+.flex.flex-col.text-sm article {
+    width: 33.3%; /* Каждый элемент займет треть от ширины контейнера */
+    box-sizing: border-box; /* Это важно, чтобы паддинги или бордеры не выходили за пределы 33.3% */
+    padding: 10px; /* Добавляет отступы между элементами (по желанию) */
+}
+
+
+.flex.flex-col.text-sm .draggable.no-draggable-children.sticky {
+    display: none;
+}
